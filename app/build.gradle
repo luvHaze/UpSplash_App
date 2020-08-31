@@ -22,6 +22,11 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+    compileOptions{
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 dependencies {
@@ -34,6 +39,14 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
-    //Meterial
-    implementation 'com.google.android.material:material:1.2.0'
+    // Meterial
+    implementation 'com.google.android.material:material:1.1.0'
+
+    // Retrofit2
+    def retrofit_version = "2.9.0"
+    implementation "com.squareup.retrofit2:retrofit:${retrofit_version}"
+    implementation "com.squareup.retrofit2:converter-gson:${retrofit_version}"
+
+    // Retrofit Logging Intercepter (1. 기본매개변수용 2. 로깅확인용)
+    implementation "com.squareup.okhttp3:logging-interceptor:4.8.1"
 }

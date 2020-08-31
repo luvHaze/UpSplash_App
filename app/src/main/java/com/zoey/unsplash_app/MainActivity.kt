@@ -3,13 +3,22 @@ package com.zoey.unsplash_app
 import android.graphics.drawable.Drawable
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
+import android.view.ContextMenu
+import android.view.View
+import android.widget.Toast
+import androidx.core.os.HandlerCompat.postDelayed
 import androidx.core.widget.addTextChangedListener
+import com.zoey.unsplash_app.retrofit.RetrofitManager
 import com.zoey.unsplash_app.utils.Constants
+import com.zoey.unsplash_app.utils.RESPONSE_STATE
 import com.zoey.unsplash_app.utils.SEARCH_TYPE
+import com.zoey.unsplash_app.utils.onMyTextChanged
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.layout_button_search.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -44,19 +53,52 @@ class MainActivity : AppCompatActivity() {
                 "MainAcitivity - OnCheckedChanged() called / currentSearchType :  $currentSearType"
             )
         }
-
-        search_term_edit_text.addTextChangedListener(object : TextWatcher{
-            override fun afterTextChanged(p0: Editable?) {
-                TODO("Not yet implemented")
+        // 텍스트가 변경이 되었을 때
+        search_term_edit_text.onMyTextChanged {
+            // 입력된 글자가 하나라도 있다면
+            if(it.toString().count() > 0) {
+                // 검색버튼을 보여준다.
+                frame_search_btn.visibility = View.VISIBLE
+                search_term_text_layout.helperText = " "
+                // 스크롤뷰를 올린다.
+                mainScrollView.scrollTo(0,200)
+            } else {
+                frame_search_btn.visibility = View.INVISIBLE
+                search_term_text_layout.helperText = "검색어를 입력해주세"
             }
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                TODO("Not yet implemented")
-            }
 
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                TODO("Not yet implemented")
+            if(it.toString().count() == 12) {
+                Log.d(Constants.TAG, "MainActivity - 에러 띄우기 ")
+                Toast.makeText(this, "검색어는 12자 까지만 입력 가능합니다.", Toast.LENGTH_LONG).show()
             }
+        }
+        // 검색버튼 클릭 시
+        btn_search.setOnClickListener {
+            Log.d(Constants.TAG, "MainActivity - 검색 버튼이 클릭되었다. / currentSearchType : $currentSearType")
+            RetrofitManager.instance.searchPhotos(searchTerm = search_term_edit_text.text.toString(), completion = {
+                responseState, responseBody ->
 
-        })
+                when (responseState) {
+                    RESPONSE_STATE.OKAY -> {
+                        Log.d(Constants.TAG, "api 호출 성공 : $responseBody ")
+                    }
+                    RESPONSE_STATE.FAIL -> {
+                        Toast.makeText(this, "API 호출 에러입니다.", Toast.LENGTH_SHORT).show()
+                        Log.d(Constants.TAG, "api 호출 실패 : $responseBody ")
+                    }
+                }
+            })
+            handleSearchButtonUI()
+        }
+    }
+
+    private fun handleSearchButtonUI() {
+        btn_progress.visibility = View.VISIBLE
+        btn_search.text =""
+
+        Handler().postDelayed({
+            btn_progress.visibility = View.INVISIBLE
+            btn_search.text = "검색"
+        }, 1500)
     }
 }
