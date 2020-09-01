@@ -1,17 +1,13 @@
-package com.zoey.unsplash_app
+package com.zoey.unsplash_app.ui
 
-import android.graphics.drawable.Drawable
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
-import android.text.Editable
-import android.text.TextWatcher
 import android.util.Log
-import android.view.ContextMenu
 import android.view.View
 import android.widget.Toast
-import androidx.core.os.HandlerCompat.postDelayed
-import androidx.core.widget.addTextChangedListener
+import com.zoey.unsplash_app.R
 import com.zoey.unsplash_app.retrofit.RetrofitManager
 import com.zoey.unsplash_app.utils.Constants
 import com.zoey.unsplash_app.utils.RESPONSE_STATE
@@ -75,16 +71,27 @@ class MainActivity : AppCompatActivity() {
         // 검색버튼 클릭 시
         btn_search.setOnClickListener {
             Log.d(Constants.TAG, "MainActivity - 검색 버튼이 클릭되었다. / currentSearchType : $currentSearType")
+
+            val userSearchInput = search_term_edit_text.text
+
             RetrofitManager.instance.searchPhotos(searchTerm = search_term_edit_text.text.toString(), completion = {
-                responseState, responseBody ->
+                responseState, responseDataArrayList ->
 
                 when (responseState) {
                     RESPONSE_STATE.OKAY -> {
-                        Log.d(Constants.TAG, "api 호출 성공 : $responseBody ")
+                        Log.d(Constants.TAG, "api 호출 성공 : ${responseDataArrayList?.size} ")
+                        val intent = Intent(this, PhotoCollectionActivity::class.java)
+                        val bundle = Bundle()
+                        // 그냥 넣으면 안돼고 직렬화를 해 준다음에 넣어줘야한다.
+                        bundle.putSerializable("photo_array_list", responseDataArrayList)
+                        intent.putExtra("array_bundle", bundle)
+                        intent.putExtra("search_term", userSearchInput)
+
+                        startActivity(intent)
                     }
                     RESPONSE_STATE.FAIL -> {
                         Toast.makeText(this, "API 호출 에러입니다.", Toast.LENGTH_SHORT).show()
-                        Log.d(Constants.TAG, "api 호출 실패 : $responseBody ")
+                        Log.d(Constants.TAG, "api 호출 실패 : $responseDataArrayList ")
                     }
                 }
             })

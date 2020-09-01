@@ -1,7 +1,11 @@
 package com.zoey.unsplash_app.retrofit
 
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
+import android.widget.Toast
 import com.google.gson.JsonObject
+import com.zoey.unsplash_app.App
 import com.zoey.unsplash_app.utils.API.CLIENT_ID
 import com.zoey.unsplash_app.utils.Constants
 import com.zoey.unsplash_app.utils.Constants.TAG
@@ -31,7 +35,7 @@ object RetrofitClient {
         // okhttp 인스턴스 생성
         val client = OkHttpClient.Builder()
         // - 로그를 찍기 위해 [로깅인터셉터] 추가 (전반적인 retrofit 통신의 모든 통신내용들 볼 수 있음)
-        val loggingInterceptor = HttpLoggingInterceptor(object: HttpLoggingInterceptor.Logger{
+        val loggingInterceptor = HttpLoggingInterceptor(object : HttpLoggingInterceptor.Logger {
             override fun log(message: String) {
                 Log.d(TAG, "RetrofitClient - log() called / message: $message")
 
@@ -45,7 +49,7 @@ object RetrofitClient {
                     else -> {
                         try {
                             Log.d(TAG, JSONObject(message).toString(4))
-                        }catch (e: Exception) {
+                        } catch (e: Exception) {
                             Log.d(TAG, message)
                         }
                     }
@@ -57,23 +61,34 @@ object RetrofitClient {
         client.addInterceptor(loggingInterceptor)
 
         // 기본 [파라미터 인터셉터] 설정
-        val baseParameterInterceptor: Interceptor = (object: Interceptor{
+        val baseParameterInterceptor: Interceptor = (object : Interceptor {
             override fun intercept(chain: Interceptor.Chain): Response {
                 Log.d(TAG, "RetrofitClient - intercept() called")
                 //오리지날 리퀘스트 (베이스 파라미터가 들어가기 전의 리퀘스트 즉, query 부분도 없는 상)
                 val originalRequest = chain.request()
 
-                // 쿼리 파라미터 추가하기
-                val addedUrl = originalRequest.url.newBuilder()
-                    .addQueryParameter("client_id",CLIENT_ID).build()
+                      // 쿼리 파라미터 추가하기
+                      val addedUrl = originalRequest.url.newBuilder()
+                          .addQueryParameter("client_id",CLIENT_ID).build()
 
-                // 최종 요청
-                val finalRequest = originalRequest.newBuilder()
-                    .url(addedUrl)
-                    .method(originalRequest.method, originalRequest.body)
-                    .build()
+                      // 최종 요청
+                      val finalRequest = originalRequest.newBuilder()
+                          .url(addedUrl)
+                          .method(originalRequest.method, originalRequest.body)
+                          .build()
 
-                return chain.proceed(finalRequest)
+                //return chain.proceed(finalRequest)
+                val response = chain.proceed(finalRequest)
+
+                if (response.code != 200) {
+                    // Retrofit은 백그라운드 쓰레드에서 돌아가는데 Toast는 메인쓰레드에서 돌아가야 하니까 핸들러로 처리해준다.
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(App.instance, "${response.code} 에러 입니다.", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                }
+
+                return response
             }
         })
 
@@ -88,12 +103,12 @@ object RetrofitClient {
 
         // ------------------------------------------------------[okHttp클라이언트 인터셉터 추가]
 
-        if(retrofitClient == null) {
+        if (retrofitClient == null) {
             retrofitClient = Retrofit.Builder()
                 .baseUrl(baseUrl)
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(client.build())
-                    // 위에서 설정한 클라이언트로 레트로핏 클라이언트 설정
+                // 위에서 설정한 클라이언트로 레트로핏 클라이언트 설정
                 .build()
         }
 

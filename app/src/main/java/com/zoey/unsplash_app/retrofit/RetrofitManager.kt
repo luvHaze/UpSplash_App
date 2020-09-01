@@ -2,11 +2,13 @@ package com.zoey.unsplash_app.retrofit
 
 import android.util.Log
 import com.google.gson.JsonElement
+import com.zoey.unsplash_app.model.Photo
 import com.zoey.unsplash_app.utils.API.BASE_URL
 import com.zoey.unsplash_app.utils.Constants.TAG
 import com.zoey.unsplash_app.utils.RESPONSE_STATE
 import retrofit2.Call
 import retrofit2.Response
+import java.text.SimpleDateFormat
 
 class RetrofitManager {
 
@@ -19,7 +21,7 @@ class RetrofitManager {
         RetrofitClient.getClient(BASE_URL)?.create(RetrofitInterface::class.java)
 
     //사진검색
-    fun searchPhotos(searchTerm: String?, completion: (RESPONSE_STATE, String) -> Unit) {
+    fun searchPhotos(searchTerm: String?, completion: (RESPONSE_STATE, ArrayList<Photo>?) -> Unit) {
 
         val term = searchTerm ?: " "
 
@@ -29,13 +31,52 @@ class RetrofitManager {
             override fun onFailure(call: Call<JsonElement>, t: Throwable) {
                 Log.d(TAG, "RetrofitManager - onFailure() called / t : ${t.message}")
 
-                completion(RESPONSE_STATE.FAIL, t.toString())
+                completion(RESPONSE_STATE.FAIL, null)
             }
             // 응답 성공시
             override fun onResponse(call: Call<JsonElement>, response: Response<JsonElement>) {
                 Log.d(TAG, "RetrofitManager - onResponse() called / response : ${response.body()} ")
 
-                completion(RESPONSE_STATE.OKAY, response.raw().toString())
+                when(response.code()){
+                    200 -> {
+                        response.body()?.let{
+                            var parsedPhotoDataArray = ArrayList<Photo>()
+                            val body = it.asJsonObject
+                            val results = body.getAsJsonArray("results")
+                            val total = body.get("total").asInt
+
+                            Log.d(TAG, "RetrofitManager - onResponse() called / total: $total")
+
+                            results.forEach { resultItem ->
+
+                                val resultItemObject = resultItem.asJsonObject
+                                var user = resultItemObject.get("user").asJsonObject
+                                val username = user.get("username").asString
+                                val likescount = resultItemObject.get("likes").asInt
+                                val thumbnailLink = resultItemObject.get("urls").asJsonObject.get("thumb").asString
+                                val createdAt = resultItemObject.get("created_at").asString
+
+                                val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+                                val formatter = SimpleDateFormat("yyyy년\nMM월 dd일")
+
+                                val outputDataString = formatter.format(parser.parse(createdAt))
+
+                                //Log.d(TAG, "RetrofitManager - outputDateString: ${outputDataString}")
+
+                                val photoItem = Photo(
+                                    author = username,
+                                    likesCount = likescount,
+                                    thumbnail = thumbnailLink,
+                                    createdAt = createdAt
+                                    )
+
+                                parsedPhotoDataArray.add(photoItem)
+
+                            }
+                            completion(RESPONSE_STATE.OKAY, parsedPhotoDataArray)
+                        }
+                    }
+                }
             }
 
         })
