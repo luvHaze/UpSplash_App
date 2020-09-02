@@ -49,4 +49,8 @@ dependencies {
 
     // Retrofit Logging Intercepter (1. 기본매개변수용 2. 로깅확인용)
     implementation "com.squareup.okhttp3:logging-interceptor:4.8.1"
+
+    // Glide (이미지 처리)
+    implementation 'com.github.bumptech.glide:glide:4.11.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.11.0'
 }
