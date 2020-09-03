@@ -7,6 +7,8 @@ import android.os.Bundle
 import android.text.InputFilter
 import android.util.Log
 import android.view.Menu
+import android.view.View
+import android.widget.CompoundButton
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -18,9 +20,10 @@ import com.zoey.unsplash_app.recyclerview.PhotoGridRecyclerViewAdapter
 import com.zoey.unsplash_app.utils.Constants
 import kotlinx.android.synthetic.main.activity_photo_collection.*
 
-class PhotoCollectionActivity: AppCompatActivity(),
-    SearchView.OnQueryTextListener
-{
+class PhotoCollectionActivity : AppCompatActivity(),
+    SearchView.OnQueryTextListener,
+    CompoundButton.OnCheckedChangeListener,
+    View.OnClickListener {
 
     //데이터
     private var photoList = ArrayList<Photo>()
@@ -43,9 +46,13 @@ class PhotoCollectionActivity: AppCompatActivity(),
         val searchTerm = intent.getStringExtra("search_term")
         photoList = bundle?.getSerializable("photo_array_list") as ArrayList<Photo>
 
-        Log.d(Constants.TAG, "PhotoCollectionActivity - onCreate() called \n" +
-                "searchTerm: ${searchTerm}, photoList.count() : ${photoList.count()}")
+        Log.d(
+            Constants.TAG, "PhotoCollectionActivity - onCreate() called \n" +
+                    "searchTerm: ${searchTerm}, photoList.count() : ${photoList.count()}"
+        )
 
+        search_history_mode_switch.setOnCheckedChangeListener(this)
+        clear_search_history_button.setOnClickListener(this)
         top_app_bar.title = searchTerm
 
         setSupportActionBar(top_app_bar)
@@ -54,7 +61,8 @@ class PhotoCollectionActivity: AppCompatActivity(),
         photoGridRecyclerViewAdapter.submitjList(photoList)
 
         // spanCount = 몇줄로 나눌지
-        my_photo_recycler_view.layoutManager = GridLayoutManager(this, 2, GridLayoutManager.VERTICAL, false)
+        my_photo_recycler_view.layoutManager =
+            GridLayoutManager(this, 2, GridLayoutManager.VERTICAL, false)
         my_photo_recycler_view.adapter = photoGridRecyclerViewAdapter
 
     }
@@ -72,13 +80,15 @@ class PhotoCollectionActivity: AppCompatActivity(),
         mySearchView.apply {
             this.queryHint = "검색어를 입력해주세요"
             this.setOnQueryTextListener(this@PhotoCollectionActivity)
-            this.setOnFocusChangeListener { _, hasExpaned ->
-                when(hasExpaned) {
+            this.setOnQueryTextFocusChangeListener { _, hasExpaned ->
+                when (hasExpaned) {
                     true -> {
                         Log.d(Constants.TAG, "서치뷰 열림")
+                        linear_search_history_view.visibility = View.VISIBLE
                     }
                     false -> {
                         Log.d(Constants.TAG, "서치뷰 닫힘")
+                        linear_search_history_view.visibility = View.INVISIBLE
                     }
                 }
 
@@ -102,7 +112,7 @@ class PhotoCollectionActivity: AppCompatActivity(),
     //검색버튼이 클릭되었을때
     override fun onQueryTextSubmit(query: String?): Boolean {
         Log.d(Constants.TAG, "onQueryTextSubmit() called / query: $query")
-        if(!query.isNullOrEmpty()){
+        if (!query.isNullOrEmpty()) {
             this.top_app_bar.title = query
             //TODO : API 호출
             //TODO : 검색어 저장
@@ -118,12 +128,33 @@ class PhotoCollectionActivity: AppCompatActivity(),
         //val userInputText = newText ?: ""
         val userInputText = newText.let {
             it
-        }?: ""
+        } ?: ""
 
-        if(userInputText.count() == 12 ){
+        if (userInputText.count() == 12) {
             Toast.makeText(this, "검색어는 12자까지만 입력 가능합니다.", Toast.LENGTH_SHORT).show()
         }
         return true
+    }
+
+    override fun onCheckedChanged(switch: CompoundButton?, isChecked: Boolean) {
+        when (switch) {
+            search_history_mode_switch -> {
+                if (isChecked == true) {
+                    Log.d(Constants.TAG, "검색어 저장기능 ON")
+                } else {
+                    Log.d(Constants.TAG, "검색어 저장기능 OFF")
+                }
+            }
+        }
+    }
+
+    override fun onClick(view: View?) {
+        when (view) {
+            clear_search_history_button -> {
+                Log.d(Constants.TAG, "검색 기록 삭제 버튼이 클릭 되었습니다.")
+            }
+        }
+
     }
 
 }
