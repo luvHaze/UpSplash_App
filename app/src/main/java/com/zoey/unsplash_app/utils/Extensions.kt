@@ -3,6 +3,8 @@ package com.zoey.unsplash_app.utils
 import android.text.Editable
 import android.text.TextWatcher
 import android.widget.EditText
+import java.text.SimpleDateFormat
+import java.util.*
 
 // 문자열이 JSON 형태인지, JSON 배열 형태인지
 fun String?.isJsonObject(): Boolean {
@@ -11,6 +13,12 @@ fun String?.isJsonObject(): Boolean {
 
 fun String?.isJsonArray(): Boolean {
     return this?.startsWith("[") == true && this.endsWith("]")
+}
+
+// 날짜 포멧
+fun Date.toString() : String {
+    val format = SimpleDateFormat("HH:mm:ss")
+    return format.format(this)
 }
 
 // 에딧 텍스트에 대한 익스텐

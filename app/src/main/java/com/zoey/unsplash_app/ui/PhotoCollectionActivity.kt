@@ -16,9 +16,13 @@ import androidx.appcompat.widget.SearchView
 import androidx.recyclerview.widget.GridLayoutManager
 import com.zoey.unsplash_app.R
 import com.zoey.unsplash_app.model.Photo
+import com.zoey.unsplash_app.model.SearchData
 import com.zoey.unsplash_app.recyclerview.PhotoGridRecyclerViewAdapter
 import com.zoey.unsplash_app.utils.Constants
+import com.zoey.unsplash_app.utils.SharedPrefManager
 import kotlinx.android.synthetic.main.activity_photo_collection.*
+import java.util.*
+import kotlin.collections.ArrayList
 
 class PhotoCollectionActivity : AppCompatActivity(),
     SearchView.OnQueryTextListener,
@@ -27,6 +31,9 @@ class PhotoCollectionActivity : AppCompatActivity(),
 
     //데이터
     private var photoList = ArrayList<Photo>()
+
+    // 검색기록 배열
+    private var searchHistoryList = ArrayList<SearchData>()
 
     //어댑터
     private lateinit var photoGridRecyclerViewAdapter: PhotoGridRecyclerViewAdapter
@@ -64,6 +71,12 @@ class PhotoCollectionActivity : AppCompatActivity(),
         my_photo_recycler_view.layoutManager =
             GridLayoutManager(this, 2, GridLayoutManager.VERTICAL, false)
         my_photo_recycler_view.adapter = photoGridRecyclerViewAdapter
+
+        // 저장된 검색기록 가져오기
+        this.searchHistoryList = SharedPrefManager.getSearchHistoryList() as ArrayList<SearchData>
+        this.searchHistoryList.forEach {
+            Log.d(Constants.TAG,"저장된 검색기록 - it : ${it.term} , ${it.timeStamp}")
+        }
 
     }
 
@@ -116,6 +129,10 @@ class PhotoCollectionActivity : AppCompatActivity(),
             this.top_app_bar.title = query
             //TODO : API 호출
             //TODO : 검색어 저장
+
+            val newSearchData = SearchData(term = query, timeStamp = Date().toString())
+            this.searchHistoryList.add(newSearchData)
+            SharedPrefManager.storeSearchHistoryList(this.searchHistoryList)
         }
 
         this.top_app_bar.collapseActionView()
