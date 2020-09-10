@@ -14,10 +14,12 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.zoey.unsplash_app.R
 import com.zoey.unsplash_app.model.Photo
 import com.zoey.unsplash_app.model.SearchData
 import com.zoey.unsplash_app.recyclerview.PhotoGridRecyclerViewAdapter
+import com.zoey.unsplash_app.recyclerview.SearchHistoryRecyclerViewAdapter
 import com.zoey.unsplash_app.utils.Constants
 import com.zoey.unsplash_app.utils.SharedPrefManager
 import kotlinx.android.synthetic.main.activity_photo_collection.*
@@ -37,6 +39,7 @@ class PhotoCollectionActivity : AppCompatActivity(),
 
     //어댑터
     private lateinit var photoGridRecyclerViewAdapter: PhotoGridRecyclerViewAdapter
+    private lateinit var mySearchHistoryRecyclerViewAdapter: SearchHistoryRecyclerViewAdapter
 
     //서치뷰
     private lateinit var mySearchView: SearchView
@@ -62,22 +65,50 @@ class PhotoCollectionActivity : AppCompatActivity(),
         clear_search_history_button.setOnClickListener(this)
         top_app_bar.title = searchTerm
 
+        // 액티비티에서 어떤 액션바를 사용할지 결정한다.
         setSupportActionBar(top_app_bar)
 
-        this.photoGridRecyclerViewAdapter = PhotoGridRecyclerViewAdapter()
-        photoGridRecyclerViewAdapter.submitjList(photoList)
+        // 사진 리사이클러뷰 세팅
+        myPhotoRecyclerViewSetting(photoList)
 
-        // spanCount = 몇줄로 나눌지
-        my_photo_recycler_view.layoutManager =
-            GridLayoutManager(this, 2, GridLayoutManager.VERTICAL, false)
-        my_photo_recycler_view.adapter = photoGridRecyclerViewAdapter
 
         // 저장된 검색기록 가져오기
         this.searchHistoryList = SharedPrefManager.getSearchHistoryList() as ArrayList<SearchData>
         this.searchHistoryList.forEach {
             Log.d(Constants.TAG,"저장된 검색기록 - it : ${it.term} , ${it.timeStamp}")
         }
+        // 검색 기록 리사이클러 뷰 준비
+        searchHistoryRecyclerViewSetting(searchHistoryList)
 
+    }
+
+    // 검색기록 리사이클러뷰 준비
+    private fun searchHistoryRecyclerViewSetting(searchHistoryList: ArrayList<SearchData>) {
+        Log.d(Constants.TAG, "PhotoCollectionActivity - searchHistoryRecyclerViewSetting()called")
+
+        mySearchHistoryRecyclerViewAdapter = SearchHistoryRecyclerViewAdapter()
+        mySearchHistoryRecyclerViewAdapter.submitList(searchHistoryList)
+
+        val myLinearLayoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, true)
+        myLinearLayoutManager.stackFromEnd = true // 가장 최근 검색어가 위에 쌓이게 된다. (보통은 아래에 쌓임)
+
+        search_history_recyclerview.apply {
+            layoutManager = myLinearLayoutManager
+            adapter = mySearchHistoryRecyclerViewAdapter
+            scrollToPosition(mySearchHistoryRecyclerViewAdapter.itemCount - 1) //리사이클러의 아이템이 자동적으로 맨 위로 오게끔 한다.
+        }
+
+    }
+
+    // 사진 리사이클러뷰 세팅
+    private fun myPhotoRecyclerViewSetting(_photolist: ArrayList<Photo>) {
+        this.photoGridRecyclerViewAdapter = PhotoGridRecyclerViewAdapter()
+        photoGridRecyclerViewAdapter.sumbitList(_photolist)
+
+        // spanCount = 몇줄로 나눌지
+        my_photo_recycler_view.layoutManager =
+            GridLayoutManager(this, 2, GridLayoutManager.VERTICAL, false)
+        my_photo_recycler_view.adapter = photoGridRecyclerViewAdapter
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {

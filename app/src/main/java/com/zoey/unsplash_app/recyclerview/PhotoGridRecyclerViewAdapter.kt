@@ -28,7 +28,7 @@ class PhotoGridRecyclerViewAdapter : RecyclerView.Adapter<PhotoItemViewHolder>()
     }
 
     // 외부에서 어댑터에 데이터 배열을 넣어준다.
-    fun submitjList(photoList: ArrayList<Photo>) {
+    fun sumbitList(photoList: ArrayList<Photo>) {
         this.photoList = photoList
     }
 
