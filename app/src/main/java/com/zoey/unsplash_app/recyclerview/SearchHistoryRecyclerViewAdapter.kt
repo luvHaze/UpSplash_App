@@ -6,15 +6,21 @@ import androidx.recyclerview.widget.RecyclerView
 import com.zoey.unsplash_app.R
 import com.zoey.unsplash_app.model.SearchData
 
-class SearchHistoryRecyclerViewAdapter : RecyclerView.Adapter<SearchHistoryItemViewHolder>() {
+class SearchHistoryRecyclerViewAdapter(searchHistoryRecyclerViewInterface: ISearchHistoryRecyclerView)
+    : RecyclerView.Adapter<SearchHistoryItemViewHolder>() {
 
     private var searchHistoryList = ArrayList<SearchData>()
+    private var iSearchHistoryRecyclerView: ISearchHistoryRecyclerView? = null
+
+    init {
+        this.iSearchHistoryRecyclerView = searchHistoryRecyclerViewInterface
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SearchHistoryItemViewHolder {
         val view =
             LayoutInflater.from(parent.context).inflate(R.layout.search_history_item, parent, false)
 
-        return SearchHistoryItemViewHolder(view)
+        return SearchHistoryItemViewHolder(view, this.iSearchHistoryRecyclerView!!)
     }
 
     override fun getItemCount(): Int {
